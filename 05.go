@@ -52,19 +52,9 @@ func create_updates(updates_text []string) [][]int {
 
 func update_in_order(rules map[int]Rule, update []int) bool {
 	for i := range len(update) - 1 {
-		before := update[:i]
 		number := update[i]
 		after := update[i+1:]
 		order, _ := rules[number]
-		for _, b := range before {
-			if slices.Contains(order.after, b) {
-				return false
-			}
-			b_order, _ := rules[b]
-			if slices.Contains(b_order.before, number) {
-				return false
-			}
-		}
 		for _, a := range after {
 			if slices.Contains(order.before, a) {
 				return false
@@ -76,6 +66,36 @@ func update_in_order(rules map[int]Rule, update []int) bool {
 		}
 	}
 	return true
+}
+
+func correct_update_order(rules map[int]Rule, update []int) []int {
+	// fmt.Println("Correcting", update)
+	for i := range len(update) - 1 {
+		number := update[i]
+		after := update[i+1:]
+		order, _ := rules[number]
+		for j, a := range after {
+			if slices.Contains(order.before, a) {
+				// A later number should be before this number, swap it here and continue
+				new_update := slices.Clone(update)[:i]
+				new_update = append(new_update, after[j])
+				new_update = append(new_update, number)
+				new_update = append(new_update, after[:j]...)
+				new_update = append(new_update, after[j+1:]...)
+				return correct_update_order(rules, new_update)
+			}
+			a_order, _ := rules[a]
+			if slices.Contains(a_order.after, number) {
+				// A later number demands that this number is after them, swap and continue
+				new_update := slices.Clone(update)[:i]
+				new_update = append(new_update, after[:j+1]...)
+				new_update = append(new_update, number)
+				new_update = append(new_update, after[j+1:]...)
+				return correct_update_order(rules, new_update)
+			}
+		}
+	}
+	return update
 }
 
 func advent05_1() {
@@ -95,6 +115,31 @@ func advent05_1() {
 	fmt.Println(sum)
 }
 
+func advent05_2() {
+	bytes, _ := os.ReadFile("05.txt")
+	data := strings.Split(string(bytes), "\n\n")
+	rules_text := strings.Split(data[0], "\n")
+	rules := create_rules(rules_text)
+	updates_text := strings.Split(data[1], "\n")
+	updates := create_updates(updates_text)
+
+	incorrect_updates := [][]int{}
+	for _, update := range updates {
+		if !update_in_order(rules, update) {
+			incorrect_updates = append(incorrect_updates, update)
+		}
+	}
+
+	// Insight: there must be exactly one correct order for the result to add up
+	sum := 0
+	for _, update := range incorrect_updates {
+		correct_update := correct_update_order(rules, update)
+		sum += correct_update[len(correct_update)/2]
+	}
+	fmt.Println(sum)
+}
+
 func main() {
 	advent05_1()
+	advent05_2()
 }
