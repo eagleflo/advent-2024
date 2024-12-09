@@ -13,7 +13,7 @@ type Rule struct {
 	after  []int
 }
 
-func create_rules(rules_text []string) map[int]Rule {
+func createRules(rules_text []string) map[int]Rule {
 	// Make a rule mapping each number to 'before' and 'after' numbers
 	rules := map[int]Rule{}
 	for _, rule := range rules_text {
@@ -36,7 +36,7 @@ func create_rules(rules_text []string) map[int]Rule {
 	return rules
 }
 
-func create_updates(updates_text []string) [][]int {
+func createUpdates(updates_text []string) [][]int {
 	updates := [][]int{}
 	for _, page := range updates_text[:len(updates_text)-1] {
 		split := strings.Split(page, ",")
@@ -50,7 +50,7 @@ func create_updates(updates_text []string) [][]int {
 	return updates
 }
 
-func update_in_order(rules map[int]Rule, update []int) bool {
+func updateIsInOrder(rules map[int]Rule, update []int) bool {
 	for i := range len(update) - 1 {
 		number := update[i]
 		after := update[i+1:]
@@ -68,8 +68,8 @@ func update_in_order(rules map[int]Rule, update []int) bool {
 	return true
 }
 
-func correct_update_order(rules map[int]Rule, update []int) []int {
-	// fmt.Println("Correcting", update)
+func fixUpdateOrder(rules map[int]Rule, update []int) []int {
+	// fmt.Println("Fixing", update)
 	for i := range len(update) - 1 {
 		number := update[i]
 		after := update[i+1:]
@@ -82,7 +82,7 @@ func correct_update_order(rules map[int]Rule, update []int) []int {
 				new_update = append(new_update, number)
 				new_update = append(new_update, after[:j]...)
 				new_update = append(new_update, after[j+1:]...)
-				return correct_update_order(rules, new_update)
+				return fixUpdateOrder(rules, new_update)
 			}
 			a_order, _ := rules[a]
 			if slices.Contains(a_order.after, number) {
@@ -91,7 +91,7 @@ func correct_update_order(rules map[int]Rule, update []int) []int {
 				new_update = append(new_update, after[:j+1]...)
 				new_update = append(new_update, number)
 				new_update = append(new_update, after[j+1:]...)
-				return correct_update_order(rules, new_update)
+				return fixUpdateOrder(rules, new_update)
 			}
 		}
 	}
@@ -102,13 +102,13 @@ func advent05_1() {
 	bytes, _ := os.ReadFile("05.txt")
 	data := strings.Split(string(bytes), "\n\n")
 	rules_text := strings.Split(data[0], "\n")
-	rules := create_rules(rules_text)
+	rules := createRules(rules_text)
 	updates_text := strings.Split(data[1], "\n")
-	updates := create_updates(updates_text)
+	updates := createUpdates(updates_text)
 
 	sum := 0
 	for _, update := range updates {
-		if update_in_order(rules, update) {
+		if updateIsInOrder(rules, update) {
 			sum += update[len(update)/2]
 		}
 	}
@@ -119,22 +119,22 @@ func advent05_2() {
 	bytes, _ := os.ReadFile("05.txt")
 	data := strings.Split(string(bytes), "\n\n")
 	rules_text := strings.Split(data[0], "\n")
-	rules := create_rules(rules_text)
+	rules := createRules(rules_text)
 	updates_text := strings.Split(data[1], "\n")
-	updates := create_updates(updates_text)
+	updates := createUpdates(updates_text)
 
-	incorrect_updates := [][]int{}
+	incorrectUpdates := [][]int{}
 	for _, update := range updates {
-		if !update_in_order(rules, update) {
-			incorrect_updates = append(incorrect_updates, update)
+		if !updateIsInOrder(rules, update) {
+			incorrectUpdates = append(incorrectUpdates, update)
 		}
 	}
 
 	// Insight: there must be exactly one correct order for the result to add up
 	sum := 0
-	for _, update := range incorrect_updates {
-		correct_update := correct_update_order(rules, update)
-		sum += correct_update[len(correct_update)/2]
+	for _, update := range incorrectUpdates {
+		correctUpdate := fixUpdateOrder(rules, update)
+		sum += correctUpdate[len(correctUpdate)/2]
 	}
 	fmt.Println(sum)
 }
