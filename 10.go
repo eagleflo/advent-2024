@@ -88,6 +88,56 @@ func advent10_1() {
 	fmt.Println(sum)
 }
 
+func calculateRating(grid [][]int, point Point) int {
+	if grid[point.y][point.x] == 9 {
+		return 1
+	}
+
+	nextSteps := findNextSteps(grid, point)
+	if len(nextSteps) == 0 {
+		return 0
+	} else {
+		sum := 0
+		for _, step := range nextSteps {
+			sum += calculateRating(grid, step)
+		}
+		return sum
+	}
+}
+
+func advent10_2() {
+	bytes, _ := os.ReadFile("10.txt")
+	data := strings.Split(string(bytes), "\n")
+	lines := data[:len(data)-1]
+	height := len(lines)
+	width := len(lines[0])
+
+	// Make a grid
+	grid := make([][]int, height)
+	for i, line := range lines {
+		grid[i] = make([]int, width)
+		for j, n := range line {
+			num, _ := strconv.Atoi(string(n))
+			grid[i][j] = num
+		}
+	}
+
+	// For each 0 in the grid, count the trails and then sum all trails to 9
+	sum := 0
+	for i, line := range grid {
+		for j, cell := range line {
+			if cell != 0 {
+				continue
+			}
+
+			sum += calculateRating(grid, Point{j, i})
+
+		}
+	}
+	fmt.Println(sum)
+}
+
 func main() {
 	advent10_1()
+	advent10_2()
 }
