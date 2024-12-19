@@ -68,8 +68,6 @@ var height = 71
 var width = 71
 var blocks = 1024
 
-var visited = make(map[Point]int)
-
 func advent18_1() {
 	grid := makeGrid(height, width)
 
@@ -83,6 +81,7 @@ func advent18_1() {
 		grid[y][x] = '#'
 	}
 
+	var visited = make(map[Point]int)
 	player := Player{Point{0, 0}, []Point{Point{0, 0}}}
 	goal := Point{width - 1, height - 1}
 	players := []Player{player}
@@ -120,6 +119,67 @@ func advent18_1() {
 	fmt.Println(min)
 }
 
+// Just find any route
+func findARoute(grid [][]rune) []Point {
+	var visited = make(map[Point]int)
+	player := Player{Point{0, 0}, []Point{Point{0, 0}}}
+	goal := Point{width - 1, height - 1}
+	players := []Player{player}
+	for {
+		newPlayers := []Player{}
+		for _, player := range players {
+			steps := findNextPlayerSteps(grid, player)
+			for _, step := range steps {
+				newSteps := append(player.steps, step)
+				if visited[step] >= len(newSteps) {
+					continue
+				} else {
+					visited[step] = len(newSteps)
+				}
+				newPlayers = append(newPlayers, Player{step, newSteps})
+				if step == goal {
+					return player.steps
+				}
+			}
+		}
+		if len(newPlayers) == 0 {
+			break
+		} else {
+			players = newPlayers
+		}
+	}
+	return nil
+}
+
+func advent18_2() {
+	grid := makeGrid(height, width)
+	bytes, _ := os.ReadFile("18.txt")
+	data := strings.Split(string(bytes), "\n")
+	lines := data[:len(data)-1]
+	route := findARoute(grid)
+
+	for i, line := range lines {
+		coords := strings.Split(line, ",")
+		x, _ := strconv.Atoi(coords[0])
+		y, _ := strconv.Atoi(coords[1])
+		p := Point{x, y}
+		grid[y][x] = '#'
+
+		if slices.Contains(route, p) {
+			route = findARoute(grid)
+		}
+
+		fmt.Println("Checked", i+1, "blocks")
+
+		if route == nil {
+			fmt.Println(x, y)
+			break
+		}
+	}
+
+}
+
 func main() {
 	advent18_1()
+	advent18_2()
 }
