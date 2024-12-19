@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-func prepareTowelsAndDesigns() ([]string, []string) {
-	bytes, _ := os.ReadFile("19.txt")
+func prepareTowelsAndDesigns(path string) ([]string, []string) {
+	bytes, _ := os.ReadFile(path)
 	parts := strings.Split(string(bytes), "\n\n")
 	towels := strings.Split(parts[0], ", ")
 	designs := strings.Split(parts[1], "\n")
@@ -51,7 +51,7 @@ func findCompletion(design string, towels []string, candidates []string) int {
 }
 
 func advent19_1() {
-	towels, designs := prepareTowelsAndDesigns()
+	towels, designs := prepareTowelsAndDesigns("19.txt")
 
 	sum := 0
 	for _, design := range designs {
@@ -60,6 +60,40 @@ func advent19_1() {
 	fmt.Println(sum)
 }
 
+var completionCache = make(map[string]int)
+
+func findAllCompletions(design string, towels []string, candidates []string) int {
+	// Check for base case, the completed design
+	if design == "" {
+		return 1
+	}
+
+	// Check cache
+	if cached, ok := completionCache[design]; ok {
+		return cached
+	}
+
+	// Next fitting towels
+	fittingTowels := findFittingTowels(design, towels)
+	sum := 0
+	for _, towel := range fittingTowels {
+		sum += findAllCompletions(design[len(towel):], towels, append(candidates, towel))
+	}
+	completionCache[design] = sum
+	return sum
+}
+
+func advent19_2() {
+	towels, designs := prepareTowelsAndDesigns("19.txt")
+
+	sum := 0
+	for _, design := range designs {
+		sum += findAllCompletions(design, towels, []string{})
+	}
+	fmt.Println(sum)
+}
+
 func main() {
 	advent19_1()
+	advent19_2()
 }
